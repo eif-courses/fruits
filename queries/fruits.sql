@@ -2,5 +2,6 @@
 SELECT * FROM fruits
 ORDER BY name;
 
--- name: InsertFruit :exec
-INSERT INTO fruits (name, colour) VALUES ($1, $2);
+-- name: InsertFruit :one
+INSERT INTO fruits (name, colour) VALUES ($1, $2)
+RETURNING *;

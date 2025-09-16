@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 CREATE TABLE fruits (
                                  id SERIAL PRIMARY KEY,
-                                 name VARCHAR(100),
-                                 colour VARCHAR(255),
+                                 name TEXT not null,
+                                 colour TEXT not null,
                                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- +goose StatementEnd
