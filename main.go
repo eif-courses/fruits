@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joho/godotenv"
 )
 
@@ -27,23 +26,18 @@ func run(connURL string) error {
 
 	queries := repository.New(conn)
 
-	// list all authors
-	fruits, err := queries.ListFruits(ctx)
-	if err != nil {
-		return err
-	}
-
 	// create an author
 	insertedFruit, err := queries.InsertFruit(ctx, repository.InsertFruitParams{
-		Name: "Obuolys",
-		Colour: "awewea"
+		Name:   "Apple",
+		Colour: "Green",
 	})
 	if err != nil {
 		return err
 	}
+
 	log.Println(insertedFruit)
 
-	log.Println(fruits)
+	//log.Println(fruits)
 
 	return nil
 }
