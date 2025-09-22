@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruits Index</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .refresh-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fruits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .fruit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .fruit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #ff6b6b;
+        }
+
+        .fruit-name {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fruit-emoji {
+            font-size: 1.8em;
+        }
+
+        .fruit-details {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .fruit-details div {
+            margin-bottom: 5px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            text-align: center;
+        }
+
+        .stats {
+            background: #e3f2fd;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 500;
+            color: #1565c0;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .fruits-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🍎 Fruits Collection</h1>
+        <p>Fresh data from your API</p>
+    </div>
+
+    <div class="controls">
+        <button class="refresh-btn" onclick="fetchFruits()">
+            <span>🔄</span> Refresh Data
+        </button>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        Loading fruits data...
+    </div>
+
+    <div id="error-container"></div>
+    <div id="fruits-container" class="fruits-grid"></div>
+</div>
+
+<script>
+    // Fruit emojis mapping
+    const fruitEmojis = {
+        'apple': '🍎',
+        'banana': '🍌',
+        'orange': '🍊',
+        'grape': '🍇',
+        'strawberry': '🍓',
+        'cherry': '🍒',
+        'peach': '🍑',
+        'pear': '🍐',
+        'pineapple': '🍍',
+        'mango': '🥭',
+        'kiwi': '🥝',
+        'lemon': '🍋',
+        'lime': '🟢',
+        'watermelon': '🍉',
+        'melon': '🍈',
+        'coconut': '🥥',
+        'avocado': '🥑'
+    };
+
+    function getFruitEmoji(fruitName) {
+        const name = fruitName.toLowerCase();
+        return fruitEmojis[name] || '🍓'; // Default to strawberry if not found
+    }
+
+    async function fetchFruits() {
+        const loadingEl = document.getElementById('loading');
+        const errorContainer = document.getElementById('error-container');
+        const fruitsContainer = document.getElementById('fruits-container');
+        const statsEl = document.getElementById('stats');
+
+        // Show loading state
+        loadingEl.style.display = 'block';
+        errorContainer.innerHTML = '';
+        fruitsContainer.innerHTML = '';
+        statsEl.textContent = '';
+
+        try {
+            const response = await fetch('http://localhost:8080/api/fruits');
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            displayFruits(data);
+
+        } catch (error) {
+            displayError(error);
+        } finally {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    function displayFruits(fruits) {
+        const fruitsContainer = document.getElementById('fruits-container');
+        const statsEl = document.getElementById('stats');
+
+        if (!fruits || fruits.length === 0) {
+            fruitsContainer.innerHTML = `
+                    <div class="no-data">
+                        <h3>No fruits found</h3>
+                        <p>The API returned an empty dataset.</p>
+                    </div>
+                `;
+            return;
+        }
+
+        // Update stats
+        statsEl.textContent = `Total fruits: ${fruits.length}`;
+
+        // Generate fruit cards
+        fruitsContainer.innerHTML = fruits.map(fruit => {
+            const emoji = getFruitEmoji(fruit.name || fruit.title || 'fruit');
+            return `
+                    <div class="fruit-card">
+                        <div class="fruit-name">
+                            <span class="fruit-emoji">${emoji}</span>
+                            ${fruit.name || fruit.title || 'Unknown Fruit'}
+                        </div>
+                        <div class="fruit-details">
+                            ${fruit.color ? `<div><strong>Color:</strong> ${fruit.color}</div>` : ''}
+                            ${fruit.price ? `<div><strong>Price:</strong> ${fruit.price}</div>` : ''}
+                            ${fruit.description ? `<div><strong>Description:</strong> ${fruit.description}</div>` : ''}
+                            ${fruit.origin ? `<div><strong>Origin:</strong> ${fruit.origin}</div>` : ''}
+                            ${fruit.season ? `<div><strong>Season:</strong> ${fruit.season}</div>` : ''}
+                            ${fruit.id ? `<div><strong>ID:</strong> ${fruit.id}</div>` : ''}
+                            ${Object.keys(fruit).filter(key =>
+                !['name', 'title', 'color', 'price', 'description', 'origin', 'season', 'id'].includes(key)
+            ).map(key =>
+                `<div><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${fruit[key]}</div>`
+            ).join('')}
+                        </div>
+                    </div>
+                `;
+        }).join('');
+    }
+
+    function displayError(error) {
+        const errorContainer = document.getElementById('error-container');
+        errorContainer.innerHTML = `
+                <div class="error">
+                    <h3>❌ Error Loading Data</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Make sure your API server is running on <code>http://localhost:8080</code></p>
+                    <p>Check the browser console for more details.</p>
+                </div>
+            `;
+        console.error('Fetch error:', error);
+    }
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', fetchFruits);
+
+    // Auto-refresh every 30 seconds (optional)
+    // setInterval(fetchFruits, 30000);
+</script>
+</body>
+</html>

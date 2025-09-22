@@ -1,0 +1,3 @@
+go get modernc.org/sqlite
+
+goose -dir ./migrations sqlite ./database.db up

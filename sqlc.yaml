@@ -1,6 +1,6 @@
 version: "2"
 sql:
-  - engine: "postgresql"
+  - engine: "sqlite"
     queries: "./queries"
     schema: "./migrations"
     gen:
@@ -11,4 +11,4 @@ sql:
         emit_exact_table_names: false
         package: "repository"
         out: "internal/repository"
-        sql_package: "pgx/v5"
+#        sql_package: "pgx/v5"

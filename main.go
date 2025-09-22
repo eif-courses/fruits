@@ -2,51 +2,24 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/eif-courses/fruits/internal/config"
 	restapi "github.com/eif-courses/fruits/internal/handlers"
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "modernc.org/sqlite" // Pure Go SQLite driver
 
 	"github.com/eif-courses/fruits/internal/repository"
 	"github.com/eif-courses/fruits/internal/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 )
 
-func run(connURL string) error {
-	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, connURL)
-	if err != nil {
-		return err
-	}
-	defer conn.Close(ctx)
-
-	queries := repository.New(conn)
-
-	// create an author
-	insertedFruit, err := queries.InsertFruit(ctx, repository.InsertFruitParams{
-		Name:   "Apple",
-		Colour: "Green",
-	})
-	if err != nil {
-		return err
-	}
-
-	log.Println(insertedFruit)
-
-	//log.Println(fruits)
-
-	return nil
-}
-
 func main() {
-
 	config.Load()
 
 	err := godotenv.Load()
@@ -54,28 +27,58 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Now you can use os.Getenv as usual
-	//if err := run(os.Getenv("DATABASE_URL")); err != nil {
-	//	log.Fatal(err)
-	//}
+	// Get SQLite database path from environment or use default
+	dbPath := os.Getenv("DATABASE_PATH")
+	if dbPath == "" {
+		dbPath = "./fruits.db"
+	}
 
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
-
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
-	defer dbpool.Close()
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		log.Fatal("Failed to ping database:", err)
+	}
 
-	queries := repository.New(dbpool)
+	// Enable pragmas for better performance and reliability
+	ctx := context.Background()
+	pragmas := []string{
+		"PRAGMA foreign_keys = ON",
+		"PRAGMA journal_mode = WAL",
+		"PRAGMA synchronous = NORMAL",
+		"PRAGMA cache_size = 1000",
+		"PRAGMA temp_store = memory",
+	}
 
+	for _, pragma := range pragmas {
+		if _, err := db.ExecContext(ctx, pragma); err != nil {
+			log.Printf("Warning: Failed to set pragma %s: %v", pragma, err)
+		}
+	}
+
+	queries := repository.New(db)
 	fruitService := services.NewFruitService(queries)
-
 	fruitHandler := restapi.NewFruitHandler(fruitService)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Get("/", fruitHandler.GetFruits)
 
+	// Add CORS middleware
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:*", "http://127.0.0.1:*", "file://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	r.Use(middleware.Logger)
+	r.Get("/api/fruits", fruitHandler.GetFruits)
+
+	log.Println("Server starting on :8080")
 	http.ListenAndServe(":8080", r)
 }

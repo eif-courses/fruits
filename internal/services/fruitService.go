@@ -17,3 +17,18 @@ func NewFruitService(queries *repository.Queries) *FruitService {
 func (f *FruitService) GetFruits(ctx context.Context) ([]repository.Fruit, error) {
 	return f.queries.ListFruits(ctx)
 }
+
+func (f *FruitService) InsertFruit(ctx context.Context, name string, colour string) (*repository.Fruit, error) {
+
+	params := repository.InsertFruitParams{
+		Name:   name,
+		Colour: colour,
+	}
+
+	fruit, err := f.queries.InsertFruit(ctx, params)
+
+	if err != nil {
+		return nil, err
+	}
+	return &fruit, nil
+}
