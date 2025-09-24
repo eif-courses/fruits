@@ -9,6 +9,15 @@ import (
 	"context"
 )
 
+const deleteFruit = `-- name: DeleteFruit :exec
+DELETE from fruits WHERE id = ?
+`
+
+func (q *Queries) DeleteFruit(ctx context.Context, id interface{}) error {
+	_, err := q.db.ExecContext(ctx, deleteFruit, id)
+	return err
+}
+
 const insertFruit = `-- name: InsertFruit :one
 INSERT INTO fruits (name, colour) VALUES (?, ?)
 RETURNING id, name, colour, created_at

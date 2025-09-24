@@ -32,3 +32,13 @@ func (f *FruitService) InsertFruit(ctx context.Context, name string, colour stri
 	}
 	return &fruit, nil
 }
+
+func (f *FruitService) DeleteFruit(ctx context.Context, id int) error {
+
+	err := f.queries.DeleteFruit(ctx, id)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

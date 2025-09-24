@@ -1,0 +1,15 @@
+### GET request to example server
+GET http://localhost:8080/api/fruits
+
+###
+
+### Create fruit
+POST http://localhost:8080/api/fruits
+Content-Type: application/json
+
+{
+  "name": "banana",
+  "colour": "yellow"
+}
+
+###

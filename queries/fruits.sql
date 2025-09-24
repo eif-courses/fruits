@@ -6,4 +6,8 @@ ORDER BY name;
 INSERT INTO fruits (name, colour) VALUES (?, ?)
 RETURNING *;
 
+-- name: DeleteFruit :exec
+DELETE from fruits WHERE id = ?;
+
+
 

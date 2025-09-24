@@ -78,6 +78,9 @@ func main() {
 
 	r.Use(middleware.Logger)
 	r.Get("/api/fruits", fruitHandler.GetFruits)
+	r.Post("/api/fruits", fruitHandler.InsertFruit)
+
+	// Generate documentation at startup (optional)
 
 	log.Println("Server starting on :8080")
 	http.ListenAndServe(":8080", r)
